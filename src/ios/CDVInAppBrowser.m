@@ -35,7 +35,7 @@
 #define    FOOTERBAR_HEIGHT   44.0
 #define    LOCATIONBAR_HEIGHT 32.0
 #define    LOCATIONBAR_CLOSE  35.0
-#define    LOCATIONBAR_IMPORT 70.0
+#define    LOCATIONBAR_IMPORT 80.0
 #endif
 #define    FOOTER_HEIGHT ((TOOLBAR_HEIGHT) + (LOCATIONBAR_HEIGHT))
 
@@ -117,7 +117,7 @@
         } else { // _blank or anything else
             [self openInInAppBrowser:absoluteUrl withOptions:options];
         }
-        
+
         CDVInAppBrowserOptions* browserOptions = [CDVInAppBrowserOptions parseOptions:options];
         if (browserOptions.hiddenimport) {
           //[self.inAppBrowserViewController.importButton setTitle:@"返回" forState: UIControlStateNormal];
@@ -566,7 +566,7 @@
 #else
         _webViewDelegate = [[CDVWebViewDelegate alloc] initWithDelegate:self];
 #endif
-        
+
         [self createViews];
     }
 
@@ -731,7 +731,7 @@
     self.addressText.rightViewMode = UITextFieldViewModeWhileEditing;
     self.addressText.rightView = clearButton;
     self.addressText.delegate = self;
-    
+
     //Import button
     NSString* frontImportString = NSLocalizedStringFromTable(@"Import", @"CDVInAppBrowser", nil); // create arrow from Unicode char
     self.importButton = [[UIBarButtonItem alloc] initWithTitle:frontImportString style:UIBarButtonItemStylePlain target:self action:@selector(importButtonOnClick:)];
@@ -1374,4 +1374,3 @@
 
 
 @end
-
