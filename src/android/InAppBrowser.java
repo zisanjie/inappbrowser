@@ -64,6 +64,8 @@ import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.StringTokenizer;
+import org.json.JSONArray;
+import android.webkit.ValueCallback;
 
 @SuppressLint("SetJavaScriptEnabled")
 public class InAppBrowser extends CordovaPlugin {
@@ -179,11 +181,15 @@ public class InAppBrowser extends CordovaPlugin {
             closeDialog();
         }
         else if (action.equals("injectScriptCode")) {
-            String jsWrapper = null;
-            if (args.getBoolean(1)) {
-                jsWrapper = String.format("prompt(JSON.stringify([eval(%%s)]), 'gap-iab://%s')", callbackContext.getCallbackId());
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && args.getBoolean(1)) {
+                runJavascriptWithResult(args.getString(0), callbackContext);
+            } else {
+                String jsWrapper = null;
+                if (args.getBoolean(1)) {
+                    jsWrapper = String.format("(function(){prompt(JSON.stringify([eval(%%s)]), 'gap-iab://%s')})()", callbackContext.getCallbackId());
+                }
+                injectDeferredObject(args.getString(0), jsWrapper);
             }
-            injectDeferredObject(args.getString(0), jsWrapper);
         }
         else if (action.equals("injectScriptFile")) {
             String jsWrapper;
@@ -227,6 +233,35 @@ public class InAppBrowser extends CordovaPlugin {
             return false;
         }
         return true;
+    }
+
+    private void runJavascriptWithResult(String scriptToInject, CallbackContext callbackContext) {
+        if (inAppWebView!=null) {
+            final String finalScriptToInject = scriptToInject;
+            final CallbackContext finalCallbackContext = callbackContext;
+            final String callbackId = callbackContext.getCallbackId();
+
+            this.cordova.getActivity().runOnUiThread(new Runnable() {
+                @SuppressLint("NewApi")
+                @Override
+                public void run() {
+                    inAppWebView.evaluateJavascript(finalScriptToInject, new ValueCallback<String>() {
+                        @Override
+                        public void onReceiveValue(String s) {
+                            PluginResult pluginResult;
+                            try {
+                                pluginResult = new PluginResult(PluginResult.Status.OK, new JSONArray("[" + s + "]"));
+                            } catch(JSONException e) {
+                                pluginResult = new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage());
+                            }
+                            finalCallbackContext.sendPluginResult(pluginResult);
+                        }
+                    });
+                }
+            });
+        } else {
+            LOG.d(LOG_TAG, "Can't inject code into the system browser");
+        }
     }
 
     /**
